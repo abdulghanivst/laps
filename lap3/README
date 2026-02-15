@@ -1,0 +1,26 @@
+
+
+ Step 1: Library Setup:
+
+Imported pandas, seaborn, and matplotlib for data handling and visualization.
+
+Step 2: Data Loading:
+
+Loaded the `Iris.csv` dataset into a DataFrame using the `read_csv` function.
+
+Step 3: Data Cleaning:
+
+- Checked for null values and duplicates.
+- Dropped the Id column as it is not needed for statistical analysis.
+
+Step 4: Statistical Exploration:
+
+descriptive summary (mean, std, min, max) to understand the data distribution.
+
+Step 5: Data Visualization
+- Created a (Pair Plot) to see relationships between all features.
+- Generated a (Heatmap) to show the correlation matrix between numeric variables.
+- Visualized the count of each species to ensure the dataset is balanced.
+
+Step 6: Final Conclusion
+Identified that( Petal Length) and (Petal Width) are the most significant features for classifying Iris species.
