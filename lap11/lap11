@@ -1,0 +1,121 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+from sklearn.preprocessing import StandardScaler
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+from sklearn.decomposition import PCA
+
+%matplotlib inline
+sns.set_theme(style="whitegrid")
+
+df = pd.read_csv('CC_GENERAL.csv')
+
+print(df.head())
+print(df.shape)
+df.info()
+print(df.describe())
+
+df = df.drop(columns=['CUST_ID'])
+
+print(df.isnull().sum())
+df = df.fillna(df.mean())
+print(df.isnull().sum())
+
+df.hist(figsize=(20, 15), bins=30, edgecolor='black')
+plt.tight_layout()
+plt.show()
+
+plt.figure(figsize=(15, 10))
+sns.heatmap(df.corr(), annot=True, cmap='coolwarm', fmt='.2f', linewidths=0.5)
+plt.title('Feature Correlation Heatmap')
+plt.show()
+
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df, x='BALANCE', y='PURCHASES', alpha=0.6)
+plt.title('Scatter Plot: Balance vs Purchases')
+plt.show()
+
+plt.figure(figsize=(8, 6))
+sns.scatterplot(data=df, x='BALANCE', y='CASH_ADVANCE', alpha=0.6)
+plt.title('Scatter Plot: Balance vs Cash Advance')
+plt.show()
+
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(df)
+
+inertia_values = []
+k_range = range(1, 11)
+
+for k in k_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    kmeans.fit(X_scaled)
+    inertia_values.append(kmeans.inertia_)
+
+plt.figure(figsize=(8, 5))
+plt.plot(k_range, inertia_values, marker='o', linestyle='--', color='b')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('Inertia (WCSS)')
+plt.title('Elbow Method for Optimal K')
+plt.xticks(k_range)
+plt.show()
+
+silhouette_scores = []
+k_silhouette_range = range(2, 11)
+
+for k in k_silhouette_range:
+    kmeans = KMeans(n_clusters=k, random_state=42, n_init=10)
+    labels = kmeans.fit_predict(X_scaled)
+    score = silhouette_score(X_scaled, labels)
+    silhouette_scores.append(score)
+
+plt.figure(figsize=(8, 5))
+plt.plot(k_silhouette_range, silhouette_scores, marker='s', linestyle='--', color='g')
+plt.xlabel('Number of Clusters (K)')
+plt.ylabel('Silhouette Score')
+plt.title('Silhouette Scores for Different K values')
+plt.xticks(k_silhouette_range)
+plt.show()
+
+silhouette_df = pd.DataFrame({
+    'K Value': list(k_silhouette_range),
+    'Silhouette Score': silhouette_scores
+})
+print(silhouette_df.to_string(index=False))
+
+final_k = 4
+
+final_model = KMeans(n_clusters=final_k, random_state=42, n_init=10)
+final_labels = final_model.fit_predict(X_scaled)
+
+df['Cluster'] = final_labels
+
+print(df.head())
+
+cluster_summary = df.groupby('Cluster').mean().T
+print(cluster_summary)
+
+print(df['Cluster'].value_counts().sort_index())
+
+pca = PCA(n_components=2, random_state=42)
+X_pca = pca.fit_transform(X_scaled)
+
+pca_df = pd.DataFrame(data=X_pca, columns=['PCA1', 'PCA2'])
+pca_df['Cluster'] = final_labels
+
+plt.figure(figsize=(10, 8))
+sns.scatterplot(
+    data=pca_df, 
+    x='PCA1', 
+    y='PCA2', 
+    hue='Cluster', 
+    palette='Set1', 
+    alpha=0.7, 
+    edgecolor='w'
+)
+plt.title('2D Visualization of Customer Segments using PCA')
+plt.xlabel('Principal Component 1')
+plt.ylabel('Principal Component 2')
+plt.legend(title='Cluster')
+plt.show()
